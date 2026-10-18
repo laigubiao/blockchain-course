@@ -1,0 +1,39 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/Escrow.sol": {
+      "content": ""
+    },
+    "contracts/LToken.sol": {
+      "content": "// SPDX-License-Identifier: MIT\r\npragma solidity >=0.8.0 <0.9.0;\r\ncontract LToken {\r\n// ---------- 元数据 ----------\r\nstring public name = \"LToken\";\r\nstring public symbol = \"LGB202430550735\";\r\nuint8 public decimals = 18;\r\nuint256 public totalSupply;\r\n// ---------- 权限 ----------\r\naddress public owner;\r\nmodifier onlyOwner() {\r\nrequire(msg.sender == owner, \"LToken: caller is not the owner\");\r\n_;\r\n}\r\n// ---------- 状态 ----------\r\n// 这两个 mapping 就是\"账本\"。代币不存在于任何钱包里，只存在于这里。\r\nmapping(address => uint256) private _balances;\r\nmapping(address => mapping(address => uint256)) private _allowances;\r\n// ---------- 事件 ----------\r\nevent Transfer(address indexed from, address indexed to, uint256 value);\r\nevent Approval(address indexed owner, address indexed spender, uint256 value);\r\nconstructor() {\r\nowner = msg.sender;\r\n}\r\n// ---------- 只读查询 ----------\r\nfunction balanceOf(address account) public view returns (uint256) {\r\nreturn _balances[account];\r\n}\r\nfunction allowance(address _owner, address spender) public view returns (uint256) {\r\nreturn _allowances[_owner][spender];\r\n}\r\n// ---------- TODO 1：转账 ----------\r\n// 要求：to 不能是零地址；msg.sender 余额必须足够；\r\n// 扣 msg.sender、加 to；发出 Transfer 事件；返回 true。\r\nfunction transfer(address to, uint256 value) public returns (bool) {\r\n    require(to != address(0), \"LToken: transfer to zero address\");\r\n    require(_balances[msg.sender] >= value, \"LToken: insufficient balance\");\r\n\r\n    _balances[msg.sender] -= value;\r\n    _balances[to] += value;\r\n\r\n    emit Transfer(msg.sender, to, value);\r\n    return true;\r\n}\r\n// ---------- TODO 2：授权 ----------\r\n// 要求：记录 msg.sender 允许 spender 花 value；发出 Approval 事件；返回 true。\r\nfunction approve(address spender, uint256 value) public returns (bool) {\r\n    _allowances[msg.sender][spender] = value;\r\n\r\n    emit Approval(msg.sender, spender, value);\r\n    return true;\r\n}\r\n// ---------- TODO 3：代扣转账 ----------\r\n// 要求：from 的余额必须足够；msg.sender 在 from 处的额度必须足够；\r\n// 额度减 value；扣 from、加 to；发出 Transfer 事件；返回 true。\r\nfunction transferFrom(address from, address to, uint256 value) public returns (bool) {\r\n    require(to != address(0), \"LToken: transfer to zero address\");\r\n    require(_balances[from] >= value, \"LToken: insufficient balance\");\r\n    require(_allowances[from][msg.sender] >= value, \"LToken: insufficient allowance\");\r\n\r\n    _allowances[from][msg.sender] -= value;\r\n    _balances[from] -= value;\r\n    _balances[to] += value;\r\n\r\n    emit Transfer(from, to, value);\r\n    return true;\r\n}\r\n// ---------- TODO 4：增发（只有 owner 能调） ----------\r\n// 要求：to 不能是零地址；totalSupply 加 value；to 余额加 value；\r\n// 发出 Transfer 事件，from 填 address(0)。\r\nfunction mint(address to, uint256 value) public onlyOwner {\r\n    require(to != address(0), \"LToken: mint to zero address\");\r\n\r\n    totalSupply += value;\r\n    _balances[to] += value;\r\n\r\n    emit Transfer(address(0), to, value);\r\n}\r\n// ---------- TODO 5：销毁自己的代币 ----------\r\n// 要求：msg.sender 余额必须足够；余额减 value；totalSupply 减 value；\r\n// 发出 Transfer 事件，to 填 address(0)。\r\nfunction burn(uint256 value) public {\r\n    require(_balances[msg.sender] >= value, \"LToken: insufficient balance\");\r\n\r\n    _balances[msg.sender] -= value;\r\n    totalSupply -= value;\r\n\r\n    emit Transfer(msg.sender, address(0), value);\r\n}\r\n}"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "evmVersion": "paris",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
